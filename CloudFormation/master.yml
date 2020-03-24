@@ -1,0 +1,64 @@
+Description: >
+  This template deploys an AWS infrastructure.
+
+Resources:
+  VPC:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+        TemplateURL: "https://rafa-trambo-bucket.s3-us-west-2.amazonaws.com/CloudFormation/vpc.yml"
+        Parameters:
+            EnvironmentName:    !Ref AWS::StackName
+            VpcCIDR:            10.1.0.0/16
+            PublicSubnet1CIDR:  10.1.0.0/19
+            PublicSubnet2CIDR:  10.1.32.0/19
+
+  SecurityGroups:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://rafa-trambo-bucket.s3-us-west-2.amazonaws.com/CloudFormation/securitygroups.yml"
+      Parameters:
+          EnvironmentName:    !Ref AWS::StackName
+          VPC: !GetAtt VPC.Outputs.VPC
+  
+  Roles:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://rafa-trambo-bucket.s3-us-west-2.amazonaws.com/CloudFormation/roles.yml"
+      Parameters:
+          EnvironmentName:    !Ref AWS::StackName
+
+  ECSCluster:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://rafa-trambo-bucket.s3-us-west-2.amazonaws.com/CloudFormation/ecs-cluster.yml"
+      Parameters:
+          EnvironmentName:    !Ref AWS::StackName
+          PublicSubnets:      !GetAtt VPC.Outputs.PublicSubnets
+          ECSRole:            !GetAtt Roles.Outputs.ECSRole
+          EC2Role:            !GetAtt Roles.Outputs.EC2Role
+          ECSSecurityGroup:   !GetAtt SecurityGroups.Outputs.ECSSG
+
+  Networking:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://rafa-trambo-bucket.s3-us-west-2.amazonaws.com/CloudFormation/networking.yml"
+      Parameters:
+          EnvironmentName:        !Ref AWS::StackName
+          PublicSubnets:          !GetAtt VPC.Outputs.PublicSubnets
+          VPC:                    !GetAtt VPC.Outputs.VPC
+          PublicLoadBalancerSG:   !GetAtt SecurityGroups.Outputs.PublicLoadBalancerSG
+
+  Service:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://rafa-trambo-bucket.s3-us-west-2.amazonaws.com/CloudFormation/ecs-service.yml"
+      Parameters:
+          EnvironmentName:        !Ref AWS::StackName
+          ImageUrl:               492266378106.dkr.ecr.us-west-2.amazonaws.com/rafa-nginx-image
+          VPC:                    !GetAtt VPC.Outputs.VPC
+          PublicListener:         !GetAtt Networking.Outputs.PublicListener
+          ServiceName:            rafa-service
+          ASGRole:                !GetAtt Roles.Outputs.ASGRole
+          ECSCluster:             !GetAtt ECSCluster.Outputs.ClusterName
+
+# https://rafa-trambo-bucket.s3-us-west-2.amazonaws.com/CloudFormation/master.yml

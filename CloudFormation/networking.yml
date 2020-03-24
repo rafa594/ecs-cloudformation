@@ -1,0 +1,67 @@
+Description: >
+  This template deploys an ECS Cluster
+
+
+Parameters:
+  
+    EnvironmentName:
+      Description: An environment name that will be prefixed to resource names
+      Type: String
+      
+    PublicLoadBalancerSG:
+      Description: Reference to Public Load Balancer Security Group
+      Type: String
+
+    PublicSubnets:
+      Type: String
+      Description: Public Subnets
+
+    VPC:
+      Description: Reference to VPC used in the exercise.
+      Type: String
+
+Resources:
+
+    PublicLoadBalancer:
+        Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+        Properties:
+          Scheme: internet-facing
+          LoadBalancerAttributes:
+          - Key: idle_timeout.timeout_seconds
+            Value: '30'
+          Subnets: !Split [",",!Ref 'PublicSubnets']
+          SecurityGroups: [!Ref PublicLoadBalancerSG]
+    
+    TargetGroupPublic:
+        Type: AWS::ElasticLoadBalancingV2::TargetGroup
+        Properties:
+            HealthCheckIntervalSeconds: 6
+            HealthCheckPath: /
+            HealthCheckProtocol: HTTP
+            HealthCheckTimeoutSeconds: 5
+            HealthyThresholdCount: 2
+            Port: 80
+            Protocol: HTTP
+            UnhealthyThresholdCount: 2
+            VpcId: !Ref VPC
+    
+    PublicLoadBalancerListener:
+        Type: AWS::ElasticLoadBalancingV2::Listener
+        DependsOn:
+        - PublicLoadBalancer
+        Properties:
+            DefaultActions:
+                -   TargetGroupArn: !Ref 'TargetGroupPublic'
+                    Type: 'forward'
+            LoadBalancerArn: !Ref 'PublicLoadBalancer'
+            Port: 80
+            Protocol: HTTP
+
+Outputs:
+  PublicListener:
+    Description: The ARN of the public load balancer's Listener
+    Value: !Ref PublicLoadBalancerListener
+
+  ExternalUrl:
+    Description: The url of the external load balancer
+    Value: !Sub http://${PublicLoadBalancer.DNSName}

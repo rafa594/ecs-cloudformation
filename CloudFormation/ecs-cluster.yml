@@ -1,0 +1,82 @@
+Description: >
+  This template deploys an ECS Cluster
+
+
+Parameters:
+  
+    EnvironmentName:
+      Description: An environment name that will be prefixed to resource names
+      Type: String
+
+    ECSAmiID:
+      Description: AMI to use in Cluster Instances
+      Type: String
+      Default: ami-014a2e30da708ee8b
+    
+    PublicSubnets:
+      Type: String
+      Description: Public Subnets
+
+    ECSRole:
+      Type: String
+      Description: ECS Role
+      
+    EC2Role:
+      Type: String
+      Description: EC2 Role
+    
+    ECSSecurityGroup:
+      Type: String
+      Description: ECS Security Group
+
+    
+Resources:
+
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub ${EnvironmentName}ECSCluster
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles: [!Ref 'EC2Role']
+  
+
+
+  ContainerInstances:
+    DependsOn: EC2InstanceProfile
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      AssociatePublicIpAddress: True
+      ImageId: !Ref ECSAmiID
+      SecurityGroups: [!Ref ECSSecurityGroup]
+      InstanceType: t2.micro
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+          yum install -y aws-cfn-bootstrap
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ECSAutoScalingGroup --region ${AWS::Region}
+
+  ECSAutoScalingGroup: 
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier: !Split [",",!Ref 'PublicSubnets']
+      LaunchConfigurationName: !Ref ContainerInstances
+      MinSize: 1
+      MaxSize: 1
+      DesiredCapacity: 1
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
+    UpdatePolicy:
+      AutoScalingReplacingUpdate:
+        WillReplace: 'true'   
+
+Outputs:
+  ClusterName:
+    Description: The name of the ECS cluster
+    Value: !Ref ECSCluster

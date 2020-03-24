@@ -1,0 +1,53 @@
+Description: This template contains the security groups required by all Infrastructure
+Parameters:
+  EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Type: String
+  VPC:
+    Description: The VPC id create for project's infrastructure
+    Type: AWS::EC2::VPC::Id
+
+Resources:
+
+  ECSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup        
+    Properties:
+        GroupDescription: Open 80 port to webpage access.
+        VpcId: !Ref VPC
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 80
+            ToPort: 80
+            CidrIp: 0.0.0.0/0
+
+        GroupName: !Sub ${EnvironmentName} ECS SecurityGroup
+        Tags:
+          - Key: Name
+            Value: !Sub ${EnvironmentName} ECS SecurityGroup
+
+  PublicLoadBalancerSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Access to the public facing load balancer
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+          # Allow access to ALB from anywhere on the internet
+          - CidrIp: 0.0.0.0/0
+            IpProtocol: -1
+  EcsSecurityGroupIngressFromPublicALB:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Ingress from the public ALB
+      GroupId: !Ref ECSSecurityGroup
+      IpProtocol: -1
+      SourceSecurityGroupId: !Ref PublicLoadBalancerSG
+
+# Outputs
+Outputs:
+  ECSSG:
+    Description: A reference to the security group for ECS hosts
+    Value: !Ref ECSSecurityGroup
+
+  PublicLoadBalancerSG:
+    Description: A reference to the security group for LoadBalancer
+    Value: !Ref PublicLoadBalancerSG
