@@ -60,5 +60,6 @@ Resources:
           ServiceName:            rafa-service
           ASGRole:                !GetAtt Roles.Outputs.ASGRole
           ECSCluster:             !GetAtt ECSCluster.Outputs.ClusterName
+          TargetGroup:            !GetAtt Networking.Outputs.TargetGroup
 
 # https://rafa-trambo-bucket.s3-us-west-2.amazonaws.com/CloudFormation/master.yml

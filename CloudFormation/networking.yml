@@ -25,6 +25,12 @@ Resources:
     PublicLoadBalancer:
         Type: AWS::ElasticLoadBalancingV2::LoadBalancer
         Properties:
+          Name:
+            !Join
+              - '-'
+              - - 'LoadBalancer'
+                - !Ref EnvironmentName
+          Type: application
           Scheme: internet-facing
           LoadBalancerAttributes:
           - Key: idle_timeout.timeout_seconds
@@ -34,8 +40,9 @@ Resources:
     
     TargetGroupPublic:
         Type: AWS::ElasticLoadBalancingV2::TargetGroup
+        DependsOn: PublicLoadBalancer
         Properties:
-            HealthCheckIntervalSeconds: 6
+            HealthCheckIntervalSeconds: 10
             HealthCheckPath: /
             HealthCheckProtocol: HTTP
             HealthCheckTimeoutSeconds: 5
@@ -47,8 +54,7 @@ Resources:
     
     PublicLoadBalancerListener:
         Type: AWS::ElasticLoadBalancingV2::Listener
-        DependsOn:
-        - PublicLoadBalancer
+        DependsOn: TargetGroupPublic
         Properties:
             DefaultActions:
                 -   TargetGroupArn: !Ref 'TargetGroupPublic'
@@ -65,3 +71,7 @@ Outputs:
   ExternalUrl:
     Description: The url of the external load balancer
     Value: !Sub http://${PublicLoadBalancer.DNSName}
+  
+  TargetGroup:
+    Description: The url of the external load balancer
+    Value: !Ref TargetGroupPublic
