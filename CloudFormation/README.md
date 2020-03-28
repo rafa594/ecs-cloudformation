@@ -25,15 +25,21 @@ CircleCI is used to automate deployment and test of the process.
 
 First of all, clone this repository to your local machine.
 
-> git clone https://github.com/rafa594/circleci-exercise.git
+```
+    git clone https://github.com/rafa594/circleci-exercise.git
+```
 
 Create an empty GitHub repository and add this origin to the local repository previously cloned.
-> git add remote origin https://REPOSITORY_URL
+```
+    git add remote origin https://REPOSITORY_URL
+```
 
 Upload your repository to GitHub
-> git add .
-> git commit -m "Your commit name"
-> git push origin master
+```
+    git add .
+    git commit -m "Your commit name"
+    git push origin master
+```
 
 
 After that, go to CircleCI login page (https://circleci.com/vcs-authorize/) and click on Log In with GitHub to access your repositories.
