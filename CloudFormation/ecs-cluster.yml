@@ -66,9 +66,9 @@ Resources:
     Properties:
       VPCZoneIdentifier: !Split [",",!Ref 'PublicSubnets']
       LaunchConfigurationName: !Ref ContainerInstances
-      MinSize: 1
-      MaxSize: 1
-      DesiredCapacity: 1
+      MinSize: 2
+      MaxSize: 2
+      DesiredCapacity: 2
     CreationPolicy:
       ResourceSignal:
         Timeout: PT15M
