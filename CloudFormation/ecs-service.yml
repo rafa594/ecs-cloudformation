@@ -93,7 +93,7 @@ Resources:
             Cluster: !Ref ECSCluster
             DeploymentConfiguration:
                 MaximumPercent: 200
-                MinimumHealthyPercent: 100
+                MinimumHealthyPercent: 50
             DesiredCount: 1
             TaskDefinition: !Ref TaskDefinition
             LoadBalancers:
