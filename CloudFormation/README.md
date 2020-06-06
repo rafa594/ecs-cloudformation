@@ -4,7 +4,7 @@ create a AWS ECS Service that use an AWS TaskDefinition with a defined NGINX ima
 All this configurations are accessed through an AWS Application Load Balancer.
 
 # Project diagram:
-![ECS CloudFormation Deployment](/images/diagram.png)
+![ECS CloudFormation Deployment](/CloudFormation/images/diagram.png)
 
 # Process
 * Login to your AWS Console account.
